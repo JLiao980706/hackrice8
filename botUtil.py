@@ -55,7 +55,7 @@ def check_prereq(lst, class_map, courses_taken):
     ans = []
     for itm in lst:
         for pre_req in class_map[itm]["preReq"]:
-            if pre_req != "none" and pre_req not in courses_taken and itm not in ans:
+            if pre_req.lower() != "none" and pre_req not in courses_taken and itm not in ans:
                 ans.append(itm)
     res = ""
     if ans:

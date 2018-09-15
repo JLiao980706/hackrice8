@@ -4,8 +4,8 @@ from pymessenger.bot import Bot ## pymessenger is a Python wrapper for the Faceb
 
 app = Flask(__name__) ## This is how we create an instance of the Flask class for our app
 
-ACCESS_TOKEN = 'EAAak33Ya2S0BAPhkLa8X7TexIpuCisomkSZA3RqcCwZAYqfTo8rPGzWO0zZCZAZCpsUtSBkLkLXbtNrmm1y07tmZBhVsohjyZAZAbeLd1iomErwOgZAJB8WtZCjvyZBYZBSQZB5VlPULsu93ttsxBUyNEXnsOca3uD3IIOfM4ZA7EwsBYu0wZDZD'
-VERIFY_TOKEN = 'TESTINGTOKEN' ## Replace 'VERIFY_TOKEN' with your verify token
+ACCESS_TOKEN = 'EAAEXESyVKJkBAMQZAfEzTcFl70KAD7UVx9a53AWxHhjL6J1UdzaPUd1BcRfyuUkChP3xlZA3QMZAtZCuqzpjMVreHZAll6UaAZBypV6CkRTlLfgM0IxL5pF3CwGMF2mGdzwKe9GCgIl724bZCkZCtv8abszReP3ZBdL1r1m1kGJqVfRm5o9oB6hhK'
+VERIFY_TOKEN = 'nmslwsnd' ## Replace 'VERIFY_TOKEN' with your verify token
 bot = Bot(ACCESS_TOKEN) ## Create an instance of the bot
 
 def verify_fb_token(token_sent):
@@ -40,7 +40,6 @@ def receive_message():
           for message in messaging:
             if message.get('message'):
                 recipient_id = message['sender']['id'] ## Facebook Messenger ID for user so we know where to send response back to
-
                 ## If user sends text
                 if "hackrice" in message['message'].get('text').lower():
                     response_sent_text = get_message_text()
@@ -50,4 +49,4 @@ def receive_message():
 
 ## Ensures that the below code is only evaluated when the file is executed, and ignored if the file is imported
 if __name__ == "__main__":
-    app.run() ## Runs application
+    app.run(port=80) ## Runs application
