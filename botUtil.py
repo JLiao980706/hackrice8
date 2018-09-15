@@ -37,6 +37,7 @@ def get_course_info():
 
 
 def get_courses_from_input(input_string):
+    print(input_string.strip().replace(" ", "").upper().split(","))
     return input_string.strip().replace(" ", "").upper().split(",")
 
 
@@ -89,8 +90,14 @@ def check_schedule(lst, class_map):
     return ans
 
 
-def get_msg2send(msg):
-    m = get_course_info()
+def check_valid(lst, m):
+    for itm in lst:
+        if itm not in m.keys():
+            return False
+    return True
+
+
+def get_msg2send(msg, m):
     courses_to_take = get_courses_from_input(msg)
     res = ""
     res += check_workload(courses_to_take, m, 4, 8) + "\n"
@@ -99,7 +106,7 @@ def get_msg2send(msg):
     return res
 
 
-msg_out = get_msg2send("Comp 215, math101, ECON100")
+msg_out = get_msg2send("Comp 215, math101, ECON100", get_course_info())
 print(msg_out)
 
 
