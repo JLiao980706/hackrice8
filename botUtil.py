@@ -110,10 +110,6 @@ msg_out = get_msg2send("Comp 215, math101, ECON100", get_course_info())
 print(msg_out)
 
 
-
-
-
-
 # test cases
 # m = get_course_info()
 # courses_to_take_1 = get_courses_from_input("Comp 140, math101, ECON100")
