@@ -37,7 +37,6 @@ def get_course_info():
 
 
 def get_courses_from_input(input_string):
-    print(input_string.strip().replace(" ", "").upper().split(","))
     return input_string.strip().replace(" ", "").upper().split(",")
 
 
@@ -100,9 +99,9 @@ def check_valid(lst, m):
 def get_msg2send(msg, m):
     courses_to_take = get_courses_from_input(msg)
     res = ""
-    res += check_workload(courses_to_take, m, 4, 8) + "\n"
-    res += check_prereq(courses_to_take, m, []) + "\n"
-    res += check_schedule(courses_to_take, m) + "\n"
+    res += check_workload(courses_to_take, m, 4, 8) + "\n\n"
+    res += check_prereq(courses_to_take, m, []) + "\n\n"
+    res += check_schedule(courses_to_take, m)
     return res
 
 

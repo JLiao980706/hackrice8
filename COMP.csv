@@ -1,0 +1,5 @@
+Class,time,workload,prereq,lab,distribution
+COMP140,13:00-14:15/24,3.64,none,none,3
+COMP215,09:00-09:50/135,4.12,COMP140,18:00-18:50/2/16:00-16:50/23,3
+MATH101,09:00-09:50/135,2.8,none,none,3
+ECON100,10:50-12:05/24,2.6,none,none,2
