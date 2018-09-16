@@ -1,4 +1,5 @@
 import csv
+import json
 
 
 def to_time_interval(timestr):
@@ -36,6 +37,13 @@ def get_course_info():
     return mapping
 
 
+def get_pre_req():
+    f = open("pre_req.json")
+    rows = [l for l in f]
+    data = json.loads("\n".join(rows))
+    return data
+
+
 def get_courses_from_input(input_string):
     return input_string.strip().replace(" ", "").upper().split(",")
 
@@ -45,23 +53,50 @@ def check_workload(lst, class_map, min_workload, max_workload):
     for itm in lst:
         workload += class_map[itm]["workload"]
     if workload < min_workload:
-        return "Maybe too easy for you?"
+        return "Maybe too easy for you? Try adding some course!\n"
     if workload > max_workload:
-        return "Too heavy workload"
+        return "Too heavy workload. Maybe remove some course!\n"
     return ""
 
 
+# def check_prereq(lst, class_map, courses_taken):
+#     ans = []
+#     for itm in lst:
+#         for pre_req in class_map[itm]["preReq"]:
+#             if pre_req.lower() != "none" and pre_req not in courses_taken and itm not in ans:
+#                 ans.append(itm)
+#     res = ""
+#     if ans:
+#         for itm in ans:
+#             res += itm + " and "
+#         return "You have not completed prerequisite class for " + res[:-5] + "."
+#     return res
+
 def check_prereq(lst, class_map, courses_taken):
     ans = []
+    # print(lst)
+    # print(courses_taken)
     for itm in lst:
-        for pre_req in class_map[itm]["preReq"]:
-            if pre_req.lower() != "none" and pre_req not in courses_taken and itm not in ans:
-                ans.append(itm)
+        if itm not in class_map.keys():
+            # print(class_map)
+            continue
+        this_pr = class_map[itm]
+        sat = True
+        for and1 in this_pr:
+            itm_or = False
+            for or1 in and1:
+                itm_and = True
+                for cname in or1:
+                    itm_and = itm_and and (cname in courses_taken)
+                itm_or = itm_or or itm_and
+            sat = sat and itm_or
+        if not sat:
+            ans.append(itm)
     res = ""
     if ans:
         for itm in ans:
             res += itm + " and "
-        return "You have not completed prerequisite class for " + res[:-5] + "."
+        return "You have not completed prerequisite class for " + res[:-5] + ".\n"
     return res
 
 
@@ -83,7 +118,8 @@ def check_schedule(lst, class_map):
         if flag and itm not in res:
             res.append(itm)
     for itm in errorlst:
-        ans += str("Oops, " + str(itm[0]) + " and " + str(itm[1]) + " have conflicting schedule.\n")
+        print("====================================================")
+        ans += str(str(itm[0]) + " and " + str(itm[1]) + " have conflicting schedule. Maybe try removing some course!\n")
     if ans:
         return ans[:-2]
     return ans
@@ -96,17 +132,45 @@ def check_valid(lst, m):
     return True
 
 
-def get_msg2send(msg, m):
+def get_msg2send(msg, m, m2):
     courses_to_take = get_courses_from_input(msg)
     res = ""
-    res += check_workload(courses_to_take, m, 4, 8) + "\n\n"
-    res += check_prereq(courses_to_take, m, []) + "\n\n"
+    print(check_workload(courses_to_take, m, 4, 8))
+    print(1)
+    res += check_workload(courses_to_take, m, 4, 8) + "\n"
+    print(check_prereq(courses_to_take, m2, []))
+    print(2)
+    res += check_prereq(courses_to_take, m2, []) + "\n"
+    print(check_schedule(courses_to_take, m))
+    print(3)
     res += check_schedule(courses_to_take, m)
-    return res
+    all_course_str = ""
+    for course in courses_to_take:
+        all_course_str += course + ", "
+    if all_course_str != "":
+        all_course_str = all_course_str[:-2]
+    if res.strip() != "":
+        return "Your current courses are " + all_course_str + ".\n" + res
+    return "Your current courses are " + all_course_str + ".\n" + "Your course selection seems good!\n"
 
 
-msg_out = get_msg2send("Comp 215, math101, ECON100", get_course_info())
-print(msg_out)
+def get_msg2send_from_list(lst, m, m2):
+    res = ""
+    res += check_workload(lst, m, 4, 8) + "\n"
+    res += check_prereq(lst, m2, []) + "\n"
+    res += check_schedule(lst, m)
+    all_course_str = ""
+    for course in lst:
+        all_course_str += course + ", "
+    if all_course_str != "":
+        all_course_str = all_course_str[:-2]
+    if res.strip() != "":
+        return "Your current courses are " + all_course_str + ".\n" + res
+    return "Your current courses are " + all_course_str + ".\n" + "Your course selection seems good!\n"
+
+
+# msg_out = get_msg2send("Comp 215, math101, ECON100", get_course_info())
+# print(msg_out)
 
 
 # test cases
