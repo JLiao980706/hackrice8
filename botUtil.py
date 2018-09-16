@@ -20,6 +20,7 @@ def get_course_info():
             name = row[0].replace(" ", "").upper()
             mapping[name] = {}
             mapping[name]["workload"] = float(row[2].replace(" ", ""))
+            mapping[name]["term"] = row[4]
             # mapping[name]["preReq"] = row[3].split(" ")
             timelst = row[1].replace("\"", "").replace(" ", "").split("/")
             # print(timelst)
@@ -137,42 +138,47 @@ def check_schedule(lst, class_map):
     return ans
 
 
-def check_valid(lst, m):
+def check_valid(lst, m, term):
     for itm in lst:
         if itm not in m.keys():
-            return False
-    return True
+            return False, 1
+        else:
+            if term == m[itm]["term"]:
+                return False, 0
+    return True, 0
 
 
-def get_msg2send(msg, m, m2):
+def get_msg2send(msg, m, m2, course_taken):
     courses_to_take = get_courses_from_input(msg)
     res = ""
-    res += check_workload(courses_to_take, m, 4, 8)
-    res += check_prereq(courses_to_take, m2, [])
+    res += check_workload(courses_to_take, m, 10, 15)
+    res += check_prereq(courses_to_take, m2, course_taken)
     res += check_schedule(courses_to_take, m)
+    reminder = "You can use keywords like ADD and REMOVE to add/remove courses from your course list"
     all_course_str = ""
     for course in courses_to_take:
         all_course_str += course + ", "
     if all_course_str != "":
         all_course_str = all_course_str[:-2]
     if res.strip() != "":
-        return "Your current courses are " + all_course_str + ".\n\n" + res
-    return "Your current courses are " + all_course_str + ".\n\n" + "Your course selection seems good!\n"
+        return "Your current courses are " + all_course_str + ".\n" + reminder + ".\n\n" + res
+    return "Your current courses are " + all_course_str + ".\n" + reminder + ".\n\n" + "Your course selection seems good!\n"
 
 
-def get_msg2send_from_list(lst, m, m2):
+def get_msg2send_from_list(lst, m, m2, course_taken):
     res = ""
-    res += check_workload(lst, m, 4, 8)
-    res += check_prereq(lst, m2, [])
+    res += check_workload(lst, m, 10, 15)
+    res += check_prereq(lst, m2, course_taken)
     res += check_schedule(lst, m)
+    reminder = "You can use keywords like ADD and REMOVE to add/remove courses from your course list"
     all_course_str = ""
     for course in lst:
         all_course_str += course + ", "
     if all_course_str != "":
         all_course_str = all_course_str[:-2]
     if res.strip() != "":
-        return "Your current courses are " + all_course_str + ".\n\n" + res
-    return "Your current courses are " + all_course_str + ".\n\n" + "Your course selection seems good!\n"
+        return "Your current courses are " + all_course_str + ".\n" + reminder + ".\n\n" + res
+    return "Your current courses are " + all_course_str + ".\n" + reminder + ".\n\n" + "Your course selection seems good!\n"
 
 
 def course_recommandation(lst, class_map, courses_taken, course_graph, course_catergory):

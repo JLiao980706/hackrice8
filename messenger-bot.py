@@ -26,11 +26,11 @@ course_taken = []
 if datetime.now().month < 9:
     cTerm = "S"
     currentTerm = "Spring"
+    nextTerm = "Fall"
 else:
     cTerm = "F"
     currentTerm = "Fall"
-
-print(m)
+    nextTerm = "Spring"
 
 
 def verify_fb_token(token_sent):
@@ -96,7 +96,7 @@ def receive_message():
                         try:
                             year = int(response_sent_text)
                             year_map = {1: "freshman", 2: "sophomore", 3: "junior", 4: "senior"}
-                            send_message(recipient_id, "Gotcha! you are a {}".format(year_map[year]))
+                            send_message(recipient_id, "Gotcha! So you are a {}".format(year_map[year]))
                             text = "Please use the link below to enter all the major courses you have taken."
                             bot.send_button_message(recipient_id, text, buttons=[{
                                 "type": "web_url",
@@ -131,23 +131,28 @@ def receive_message():
                     #     flag1 = True
                     elif not flag2:
                         response_sent_text = message['message'].get('text').upper()
-                        process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
+                        process, reason = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m, cTerm)
                         if not process:
-                            send_message(recipient_id,
-                                         "You did not type course names separated by comma, or the course names are not in the correct format!")
+                            if reason == 1:
+                                send_message(recipient_id,
+                                            "You did not type course names separated by comma, or the course names are not in the correct format!")
+                            else:
+                                send_message(recipient_id,
+                                             "The course you entered is not offered in {}".format(nextTerm))
                         else:
                             course_list = botUtil.get_courses_from_input(response_sent_text)
-                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2))
+                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2, course_taken))
                             flag2 = True
                     elif not flag3:
                         response_sent_text = message['message'].get('text').upper()
                         if "COURSE RECOMMENDATION" in response_sent_text:
                             tuple_of_tuple = botUtil.course_recommandation(course_list, m, course_taken, botUtil.readin_json("course_graph.json"), botUtil.readin_json("course_cat.json"))
+                            send_message(recipient_id, botUtil.check_major_pre_req(course_list, botUtil.readin_json("pre_req.json"), course_taken))
                             send_message(recipient_id, courseUtil.tpt_to_output_string(tuple_of_tuple))
-                            continue
-                        process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
+                            break
+                        process, reason = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m, cTerm)
                         if process:
-                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2))
+                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2, course_taken))
                             course_list = botUtil.get_courses_from_input(response_sent_text)
                         else:
                             output_list, idx = courseUtil.get_add_subtract_list(response_sent_text, m)
@@ -176,7 +181,7 @@ def receive_message():
                                     send_message(recipient_id, "You have not chosen " + itm + "!\n")
                             send_message(recipient_id, "\n")
                             send_message(recipient_id, "Analyzing your new course selection: ")
-                            send_message(recipient_id, botUtil.get_msg2send_from_list(course_list, m, m2))
+                            send_message(recipient_id, botUtil.get_msg2send_from_list(course_list, m, m2, course_taken))
 
     return "Message Processed"
 
@@ -204,6 +209,9 @@ def get_form_result():
         course = ', '.join(my_json['course'])
     send_message(my_json['recipient_id'], "You have taken " + course + ". Right? Say YES to confirm")
     global flag0
+    global course_taken
+    course_taken = [itm.replace(" ", "") for itm in my_json["course"]]
+
     flag0 = True
 
     return "Result Got!"
