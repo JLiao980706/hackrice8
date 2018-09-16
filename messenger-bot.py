@@ -70,12 +70,25 @@ def receive_message():
                             flag2 = True
                     elif not flag3:
                         response_sent_text = message['message'].get('text').upper()
+                        if "COURSE RECOMMENDATION" in response_sent_text:
+                            tuple_of_tuple = botUtil.course_recommandation(course_list, m, ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"], botUtil.readin_json("course_graph.json"), botUtil.readin_json("course_cat.json"))
+                            send_message(recipient_id, courseUtil.tpt_to_output_string(tuple_of_tuple))
+                            continue
                         process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
                         if process:
                             send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2))
                             course_list = botUtil.get_courses_from_input(response_sent_text)
                         else:
-                            output_list = courseUtil.get_add_subtract_list(response_sent_text, m)
+                            output_list, idx = courseUtil.get_add_subtract_list(response_sent_text, m)
+                            if not output_list[idx]:
+                                if idx == 1:
+                                    send_message(recipient_id, "The course you want to add may not be a valid course"
+                                                               " or the course is not available in this semester.\n")
+                                    continue
+                                elif idx == 2:
+                                    send_message(recipient_id, "The course you want to remove may not be a valid course"
+                                                               " or the course is not available in this semester.\n")
+                                    continue
                             for itm in output_list[0]:
                                 send_message(recipient_id, "What do you want to do with " + itm + "?\n")
                             for itm in output_list[1]:
@@ -97,8 +110,6 @@ def receive_message():
                     # if "hackrice" in message['message'].get('text').lower():
                     #     response_sent_text = get_message_text()
                     #     send_message(recipient_id, response_sent_text)
-
-
     return "Message Processed"
 
 ## Ensures that the below code is only evaluated when the file is executed, and ignored if the file is imported

@@ -12,20 +12,21 @@ def to_time_interval(timestr):
 
 def get_course_info():
     mapping = {}
-    with open('COMP.csv') as csvfile:
+    with open('new_info_1.csv') as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         first = next(readCSV)
         for row in readCSV:
             # print(row)
-            mapping[row[0]] = {}
-            mapping[row[0]]["workload"] = float(row[2])
-            mapping[row[0]]["preReq"] = row[3].split(" ")
-            timelst = row[1].split("/")
+            name = row[0].replace(" ", "").upper()
+            mapping[name] = {}
+            mapping[name]["workload"] = float(row[2].replace(" ", ""))
+            # mapping[name]["preReq"] = row[3].split(" ")
+            timelst = row[1].replace("\"", "").replace(" ", "").split("/")
             # print(timelst)
-            mapping[row[0]]["time"] = {}
+            mapping[name]["time"] = {}
             for i in range(0, len(timelst), 2):
                 for itm in timelst[i+1]:
-                    mapping[row[0]]["time"][itm] = to_time_interval(timelst[i])
+                    mapping[name]["time"][itm] = to_time_interval(timelst[i])
             # timelst2 = row[4].split("/")
             # if timelst2 != "none":
             #     mapping[row[0]]["lab"] = []
@@ -58,9 +59,9 @@ def check_workload(lst, class_map, min_workload, max_workload):
     for itm in lst:
         workload += class_map[itm]["workload"]
     if workload < min_workload:
-        return "Maybe too easy for you?"
+        return "Want me to recommend you some course? Type 'Course Recommendation' to learn more.\n\n"
     if workload > max_workload:
-        return "Too heavy workload"
+        return "Caution: Heavy workload!\n\n"
     return ""
 
 
@@ -90,7 +91,7 @@ def check_prereq(lst, class_map, courses_taken):
     if ans:
         for itm in ans:
             res += itm + " and "
-        return "You have not completed prerequisite class for " + res[:-5] + "."
+        return "You have not completed prerequisite class for " + res[:-5] + ".\n\n"
     return res
 
 
@@ -128,10 +129,32 @@ def check_valid(lst, m):
 def get_msg2send(msg, m, m2):
     courses_to_take = get_courses_from_input(msg)
     res = ""
-    res += check_workload(courses_to_take, m, 4, 8) + "\n\n"
-    res += check_prereq(courses_to_take, m2, []) + "\n\n"
+    res += check_workload(courses_to_take, m, 4, 8)
+    res += check_prereq(courses_to_take, m2, [])
     res += check_schedule(courses_to_take, m)
-    return res
+    all_course_str = ""
+    for course in courses_to_take:
+        all_course_str += course + ", "
+    if all_course_str != "":
+        all_course_str = all_course_str[:-2]
+    if res.strip() != "":
+        return "Your current courses are " + all_course_str + ".\n\n" + res
+    return "Your current courses are " + all_course_str + ".\n\n" + "Your course selection seems good!\n"
+
+
+def get_msg2send_from_list(lst, m, m2):
+    res = ""
+    res += check_workload(lst, m, 4, 8)
+    res += check_prereq(lst, m2, [])
+    res += check_schedule(lst, m)
+    all_course_str = ""
+    for course in lst:
+        all_course_str += course + ", "
+    if all_course_str != "":
+        all_course_str = all_course_str[:-2]
+    if res.strip() != "":
+        return "Your current courses are " + all_course_str + ".\n\n" + res
+    return "Your current courses are " + all_course_str + ".\n\n" + "Your course selection seems good!\n"
 
 
 def course_recommandation(lst, class_map, courses_taken, course_graph, course_catergory):
