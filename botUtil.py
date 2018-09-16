@@ -207,8 +207,44 @@ def course_recommandation(lst, class_map, courses_taken, course_graph, course_ca
     return (first_choice, first_course_list), (second_choice, second_course_list)
 
 
-print(get_course_info())
-print(course_recommandation([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"], readin_json("course_graph.json"), readin_json("course_cat.json")))
+def check_major_pre_req(lst, pre_req, courses_taken):
+    major_req = readin_json("cs_bs_req.json")
+    new_req = []
+    correct_cur = 0
+    for cross_list in major_req:
+        cross_list = [l.replace(" ", "") for l in cross_list]
+        no_pre_req = report_prereq(cross_list, pre_req, courses_taken)
+        new_list = [c for c in cross_list if c not in no_pre_req]
+        for grp in new_list:
+            if grp in new_list:
+                correct_cur += 1
+                break
+        satisfied = False
+        for c in courses_taken + lst:
+            satisfied = satisfied or c in new_list
+        if not satisfied:
+            new_req.append(new_list)
+    if correct_cur == len(lst):
+        return "All of the courses you are taking are major requirements!"
+    all_empty = True
+    for lst in new_req:
+        all_empty = all_empty and (lst == [])
+    if all_empty:
+        return "There is no more major requirements that you can take now."
+    big_string = "You can consider take the following course to satisfy the major requirement:\n"
+    for lst in new_req:
+        if len(lst) > 0:
+            cur_string = " or ".join(lst) + "\n"
+            big_string += cur_string
+    return big_string
+
+
+
+
+
+print(check_major_pre_req([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"]))
+# print(get_course_info())
+# print(course_recommandation([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"], readin_json("course_graph.json"), readin_json("course_cat.json")))
 
 
 
