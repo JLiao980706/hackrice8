@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Choose the class you have taken</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+        #input-wrapper {
+            display: flex;
+            flex-flow: column wrap;
+            align-items: center;
+        }
+
+        #viewer-wrapper {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #myInput {
+            width: 70%;
+            font-size: 16px;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        #course-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            overflow: auto;
+            text-align: center;
+        }
+
+        #course-list li {
+            border: 1px solid #ddd;
+            margin-top: -1px; /* Prevent double borders */
+            background-color: #f6f6f6;
+            padding: 12px;
+            text-decoration: none;
+            font-size: 18px;
+            color: black;
+            display: block
+        }
+
+        #course-list li:hover:not(.header) {
+            background-color: #eee;
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+<body>
+<p style="text-align: center; font-size: 20px;" id="title">Please choose all major classes you have taken</p>
+<div id="input-wrapper">
+    <input id="myInput" onkeyup="searchFor()" placeholder="Search for classes.." title="Type in a class">
+</div>
+<div id="viewer-wrapper" style="text-align: center">
+    Selected Course: <span id="course-selected">None</span>
+    <a id="delete-course" href="#">Delete</a>
+</div>
+<div style="text-align: center"><button style="text-align: center" id="submit-course" onclick="submitAnswer()">Submit</button></div>
+<div><ul id="course-list"></ul></div>
+<script>
+    // Include the Messenger Extensions JS SDK
+    (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/messenger.Extensions.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'Messenger'));
+
+    var courseList = ["BIOE 485", "CAAM 335", "COMP 130", "COMP 140", "COMP 160", "COMP 182", "COMP 211", "COMP 215", "COMP 217", "COMP 221", "COMP 280", "COMP 310", "COMP 311", "COMP 314", "COMP 321", "COMP 322", "COMP 326", "COMP 327", "COMP 330", "COMP 340", "COMP 380", "COMP 382", "COMP 403", "COMP 409", "COMP 410", "COMP 411", "COMP 412", "COMP 413", "COMP 420", "COMP 421", "COMP 422", "COMP 424", "COMP 425", "COMP 427", "COMP 429", "COMP 430", "COMP 431", "COMP 436", "COMP 440", "COMP 447", "COMP 448", "COMP 450", "COMP 481", "COMP 482", "COMP 485", "COMP 486", "COMP 498", "COMP 521", "COMP 541", "COMP 556", "COMP 509", "ECON 307", "ECON 382", "ELEC 220", "ELEC 301", "ELEC 303", "ELEC 322", "ELEC 326", "ELEC 331", "ELEC 421", "ELEC 429", "ELEC 437", "ELEC 475", "ELEC 485", "ELEC 539", "ELEC 552", "ELEC 556", "MATH 101", "MATH 102", "MATH 211", "MATH 212", "MATH 221", "MATH 222", "MATH 354", "MATH 355", "PHYS 101", "PHYS 102", "PHYS 111", "PHYS 112", "PHYS 125", "PHYS 126", "PHYS 141", "STAT 310", "STAT 312", "STAT 331"]
+    var selectedCourse = [];
+
+    window.extAsyncInit = function() {
+        MessengerExtensions.getSupportedFeatures(function success(result) {
+            var features = result.supported_features;
+            if (features.includes("context")) {
+                MessengerExtensions.getContext('<APP_ID>',
+                    function success(thread_context) {
+                        // success
+                        document.getElementById("psid").value = thread_context.psid;
+                    },
+                    function error(err) {
+                        // error
+                        console.log(err);
+                    }
+                );
+            }
+        }, function error(err) {
+            // error retrieving supported features
+            console.log(err);
+        });
+
+
+        $("#delete-course").click(function (e) {
+            if(selectedCourse.length > 0) {
+                var removed = selectedCourse.pop();
+                console.log(removed);
+                courseList.push(removed);
+                document.getElementById("course-selected").innerText = selectedCourse.join(", ");
+                searchFor();
+            }
+            if(selectedCourse.length === 0) {
+                document.getElementById("course-selected").innerText = "None"
+            }
+        });
+    };
+
+    function courseClickEvent(e) {
+        if (e.target.className === "course") {
+            console.log(e.target);
+            var course = e.target.innerText;
+            selectedCourse.push(e.target.innerText);
+            document.getElementById("course-selected").innerText = selectedCourse.join(", ");
+            remove(courseList, course);
+            searchFor();
+        }
+    }
+
+    function appendCourseList(courseList) {
+        var ul = document.getElementById("course-list");
+        $(ul).empty();
+        for(var idx in courseList) {
+            var li = document.createElement("li");
+            li.id = courseList[idx];
+            li.className = "course";
+            li.innerText = courseList[idx];
+            li.onclick = courseClickEvent;
+            ul.appendChild(li);
+        }
+    }
+
+
+    function searchFor() {
+        var input = $("#myInput").val();
+        var re = new RegExp(input, "i");
+        var newList = courseList.filter(function (c) {
+            return re.test(c.replace(" ", ""));
+        });
+        appendCourseList(newList.sort());
+    }
+
+    function remove(array, element) {
+        const index = array.indexOf(element);
+        array.splice(index, 1);
+    }
+
+    function submitAnswer() {
+        var obj = {recipient_id: '{{ value }}', course: selectedCourse};
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", "/class-result", true);
+        xhttp.send(JSON.stringify(obj));
+        MessengerExtensions.requestCloseBrowser(function success() {
+            console.log("Webview closing");
+        }, function error(err) {
+            console.log(err);
+        });
+    }
+
+</script>
+</body>
+</html>

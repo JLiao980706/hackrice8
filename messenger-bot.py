@@ -1,63 +1,134 @@
-## Python libraries that we need to import for our bot
 import botUtil
 import courseUtil
-from flask import Flask, request
-from pymessenger.bot import Bot ## pymessenger is a Python wrapper for the Facebook Messenger API
+from flask import Flask, request, make_response, render_template
+from pymessenger.bot import Bot
+import ast
+from datetime import datetime
 
-app = Flask(__name__) ## This is how we create an instance of the Flask class for our app
+app = Flask(__name__)  # This is how we create an instance of the Flask class for our app
 
-ACCESS_TOKEN = 'EAAEXESyVKJkBAMQZAfEzTcFl70KAD7UVx9a53AWxHhjL6J1UdzaPUd1BcRfyuUkChP3xlZA3QMZAtZCuqzpjMVreHZAll6UaAZBypV6CkRTlLfgM0IxL5pF3CwGMF2mGdzwKe9GCgIl724bZCkZCtv8abszReP3ZBdL1r1m1kGJqVfRm5o9oB6hhK'
-VERIFY_TOKEN = 'nmslwsnd' ## Replace 'VERIFY_TOKEN' with your verify token
-bot = Bot(ACCESS_TOKEN) ## Create an instance of the bot
+ACCESS_TOKEN = 'EAAGB4sIKbrQBACq3NTPiSdPJGY534iAR51nY1FqOgjyQLXRIAuH4DQAeQK0WEpNkr3ZCEnWVs9MBqSIbDuFwqsYiDirqTxZCBtkMIqQ92yqwgKo1RoQq0Au0jvDpac28SQk5Grqm4tIuZBVMwTUUIZBWZCEqszE4tQR6jBpqKaQZDZD'
+VERIFY_TOKEN = 'nmslwsnd'  # Replace 'VERIFY_TOKEN' with your verify token
+bot = Bot(ACCESS_TOKEN)  # Create an instance of the bot
+yes0 = False
+flag_intro = False
+flag_major = False
+flag_year = False
+flag0 = False
 flag1 = False
 flag2 = False
 flag3 = False
 m = botUtil.get_course_info()
 m2 = botUtil.get_pre_req()
 course_list = []
+course_taken = []
+
+if datetime.now().month < 9:
+    cTerm = "S"
+    currentTerm = "Spring"
+else:
+    cTerm = "F"
+    currentTerm = "Fall"
+
+print(m)
+
 
 def verify_fb_token(token_sent):
-    ## Verifies that the token sent by Facebook matches the token sent locally
+    # Verifies that the token sent by Facebook matches the token sent locally
     if token_sent == VERIFY_TOKEN:
         return request.args.get("hub.challenge")
     return 'Invalid verification token'
 
-# Chooses a message to send to the user
-def get_message_text():
-    return "Hey, it looks like you're interested in HackRice! For more information, please visit http://hack.rice.edu"
 
-## Send text message to recipient
+# Send text message to recipient
 def send_message(recipient_id, response):
-    bot.send_text_message(recipient_id, response) ## Sends the 'response' parameter to the user
+    bot.send_text_message(recipient_id, response)
     return "Message sent"
 
-## This endpoint will receive messages
+
+# This endpoint will receive messages
 @app.route("/", methods=['GET', 'POST'])
 def receive_message():
+    global flag_intro
+    global flag_major
+    global flag_year
+    global yes0
+    global flag0
     global flag1
     global flag2
     global flag3
     print("MESSAGE RECEIVED")
     global course_list
+    global course_taken
     global m2
     global m
-    ## Handle GET requests
+    # Handle GET requests
     if request.method == 'GET':
-        token_sent = request.args.get("hub.verify_token") ## Facebook requires a verify token when receiving messages
+        token_sent = request.args.get("hub.verify_token")  # Facebook requires a verify token when receiving messages
         return verify_fb_token(token_sent)
 
-    ## Handle POST requests
+    # Handle POST requests
     else:
-        output = request.get_json() ## get whatever message a user sent the bot
+        output = request.get_json()  # get whatever message a user sent the bot
         for event in output['entry']:
             messaging = event['messaging']
             for message in messaging:
                 if message.get('message'):
-                    recipient_id = message['sender']['id'] ## Facebook Messenger ID for user so we know where to send response back to
-                    ## If user sends text
-                    if not flag1:
-                        send_message(recipient_id, "Hi, I am here to help you with your course selection, please enter the courses you would like to take, splited by comma!")
-                        flag1 = True
+                    recipient_id = message['sender']['id']  # Facebook Messenger ID for user so we know where to send response back to
+                    # If user sends text
+                    if not flag_intro:
+                        intro = "Hi! This is your personal Rice Academic Helper. This is now the {} semester so I will help you with your Spring course selection".format(currentTerm)
+                        send_message(recipient_id, intro)
+                        send_message(recipient_id, "May I know your major?")
+                        flag_intro = True
+
+                    elif not flag_major:
+                        response_sent_text = message['message'].get('text').upper()
+                        if response_sent_text == "CS" or response_sent_text == "COMPUTER SCIENCE":
+                            send_message(recipient_id, "Great!")
+                            flag_major = True
+                            send_message(recipient_id, "Which year student are you? 1, 2, 3 or 4?")
+                        else:
+                            send_message(recipient_id, "Sorry, we don't have full supports for other majors right now. Stay tight for updates!")
+
+                    elif not flag_year:
+                        response_sent_text = message['message'].get('text').upper()
+                        try:
+                            year = int(response_sent_text)
+                            year_map = {1: "freshman", 2: "sophomore", 3: "junior", 4: "senior"}
+                            send_message(recipient_id, "Gotcha! you are a {}".format(year_map[year]))
+                            text = "Please use the link below to enter all the major courses you have taken."
+                            bot.send_button_message(recipient_id, text, buttons=[{
+                                "type": "web_url",
+                                "url": "https://fced6db5.ngrok.io/class/" + recipient_id,
+                                "title": "Enter your courses",
+                                "webview_height_ratio": "tall",
+                                "messenger_extensions": True
+                            }])
+                            flag_year = True
+                        except ValueError:
+                            send_message(recipient_id, "Sorry, I can't understand what you said.")
+
+                    elif not yes0:
+                        if flag0:
+                            if "yes" == message['message'].get('text').lower() or "y" == message['message'].get(
+                                    'text').lower():
+                                yes0 = True
+                                send_message(recipient_id,
+                                             "Please enter the courses you would like to take next semester, split by comma!")
+
+                        if not yes0:
+                            text = "Please use the link below to re-enter all the major courses you have taken."
+                            bot.send_button_message(recipient_id, text, buttons=[{
+                                "type": "web_url",
+                                "url": "https://fced6db5.ngrok.io/class/" + recipient_id,
+                                "title": "Enter your courses",
+                                "webview_height_ratio": "tall",
+                                "messenger_extensions": True
+                            }])
+                    # elif not flag1:
+                    #     send_message(recipient_id, "Please enter the courses you would like to take, split by comma!")
+                    #     flag1 = True
                     elif not flag2:
                         response_sent_text = message['message'].get('text').upper()
                         process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
@@ -71,7 +142,7 @@ def receive_message():
                     elif not flag3:
                         response_sent_text = message['message'].get('text').upper()
                         if "COURSE RECOMMENDATION" in response_sent_text:
-                            tuple_of_tuple = botUtil.course_recommandation(course_list, m, ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"], botUtil.readin_json("course_graph.json"), botUtil.readin_json("course_cat.json"))
+                            tuple_of_tuple = botUtil.course_recommandation(course_list, m, course_taken, botUtil.readin_json("course_graph.json"), botUtil.readin_json("course_cat.json"))
                             send_message(recipient_id, courseUtil.tpt_to_output_string(tuple_of_tuple))
                             continue
                         process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
@@ -107,11 +178,36 @@ def receive_message():
                             send_message(recipient_id, "Analyzing your new course selection: ")
                             send_message(recipient_id, botUtil.get_msg2send_from_list(course_list, m, m2))
 
-                    # if "hackrice" in message['message'].get('text').lower():
-                    #     response_sent_text = get_message_text()
-                    #     send_message(recipient_id, response_sent_text)
     return "Message Processed"
 
-## Ensures that the below code is only evaluated when the file is executed, and ignored if the file is imported
+
+@app.route("/class/<recipient_id>", methods=['GET', 'POST'])
+def get_classes_taken(recipient_id):
+    print(recipient_id)
+    referrer = request.environ['HTTP_REFERER']
+    res = make_response(render_template("form.html", value=recipient_id))
+    if 'facebook.com' in referrer:
+        res.headers.set('X-Frame-Options', 'ALLOW-FROM https://www.facebook.com/')
+    elif 'messenger.com' in referrer:
+        res.headers.set('X-Frame-Options', 'ALLOW-FROM https://www.messenger.com/')
+    return res
+
+
+@app.route("/class-result", methods=['GET', 'POST'])
+def get_form_result():
+    data = request.data.decode('utf8').replace("'", '"')
+    my_json = ast.literal_eval(data)
+    print(my_json)
+    if len(my_json['course']) == 0:
+        course = "NO CLASS"
+    else:
+        course = ', '.join(my_json['course'])
+    send_message(my_json['recipient_id'], "You have taken " + course + ". Right? Say YES to confirm")
+    global flag0
+    flag0 = True
+
+    return "Result Got!"
+
+
 if __name__ == "__main__":
-    app.run(port=80) ## Runs application
+    app.run()

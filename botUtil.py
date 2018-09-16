@@ -1,6 +1,5 @@
 import csv
 import json
-import math
 from collections import defaultdict
 
 
@@ -113,7 +112,7 @@ def check_prereq(lst, class_map, courses_taken):
         return "You have not completed prerequisite class for " + res[:-5] + ".\n" + "\n".join(strings)
     return res
 
-
+print(check_prereq(["COMP407", "COMP382", "MATH101"], get_pre_req(), []))
 def check_schedule(lst, class_map):
     time = {"1": [], "2": [], "3": [], "4": [], "5": []}
     res = []
@@ -136,25 +135,6 @@ def check_schedule(lst, class_map):
     if ans:
         return ans[:-2]
     return ans
-
-
-def has_time_conflict(lst, class_map):
-    lst = [l for l in lst if l != "COMP"]
-    res = []
-    errorlst = []
-    for itm in lst:
-        flag = True
-        for key, val in class_map[itm]["time"].items():
-            for currect_class in res:
-                for key2, val2 in class_map[currect_class]["time"].items():
-                    if flag and key == key2 and val[0] <= val2[0] <= val[1] or val[0] <= val2[1] <= val[1] or val2[0] <= \
-                            val[0] <= val2[1] or val2[0] <= val[1] <= val2[1]:
-                        if (itm, currect_class) not in errorlst:
-                            errorlst.append((itm, currect_class))
-                            flag = False
-        if flag and itm not in res:
-            res.append(itm)
-    return len(errorlst) > 0
 
 
 def check_valid(lst, m):
@@ -274,122 +254,8 @@ def check_major_pre_req(lst, pre_req, courses_taken):
     return big_string
 
 
-def readin_semester():
-    f = open("courses_general_info.csv")
-    d = {}
-    header = True
-    for row in f:
-        if header:
-            header = False
-            continue
-        itms = row.split(",")
-        c = itms[0].replace(" ", "")
-        sms = itms[-1][0]
-        if c in d.keys():
-            d[c] = "FS"
-        else:
-            d[c] = sms
-    return d
 
 
-def predict_grad_wrapper(lst, courses_taken, sms):
-    result = predict_grad(lst, courses_taken, sms)
-    if result[0] == 0:
-        return "You will graduate on time!"
-    else:
-        elective_string = ""
-        if "COMP" in result[1]:
-            elective_string = "There may also be other elective/capstone courses that you cannot take."
-        strings = []
-        for k in result[1]:
-            if "COMP" in k:
-                elective_string = ".\nThere may also be other elective/capstone courses that you cannot take."
-            substring = " or ".join([m for m in k if m != "COMP"])
-            if len(k) > 1:
-                substring = "(" + substring + ")"
-            if substring != "":
-                strings.append(substring)
-        mystring = ", ".join(strings)
-        return "You will not be able to graduate on time. The courses that you are not able to take are: " + mystring + elective_string
-
-
-def predict_grad(lst, courses_taken, sms):
-    major_req = readin_json("cs_bs_req.json")
-    min_miss = float("inf")
-    miss = []
-    all_courses = lst + courses_taken
-    if sms == 8:
-        for itm in major_req:
-            taken = False
-            for idx in all_courses:
-                if idx in itm:
-                    taken = True
-                    break
-            if not taken:
-                miss.append(itm)
-        elective_count = 0
-        for c in all_courses:
-            if c == "COMP":
-                elective_count += 1
-        for i in range(5 - elective_count):
-            miss.append(["COMP"])
-        return len(miss), miss
-
-    for state in generate_states(all_courses, sms + 1):
-        result = predict_grad(state, all_courses, sms + 1)
-        if result[0] == 0:
-            return 0, []
-        if result[0] <= min_miss:
-            min_miss = result[0]
-            miss = result[1]
-    return min_miss, miss
-
-
-def generate_states(courses_taken, sms):
-    major_req = readin_json("cs_bs_req.json")
-    pre_req = readin_json("pre_req.json")
-    pos_major = []
-    for itm in major_req:
-        no_pre_req = report_prereq(itm, pre_req, courses_taken)
-        satisfied = False
-        for c in courses_taken:
-            if c in itm:
-                satisfied = True
-                break
-        if satisfied:
-            continue
-        nitm = [l for l in itm if l not in no_pre_req]
-        if len(nitm) > 0:
-            pos_major.append(nitm)
-    return do_generate(pos_major, [], sms)
-
-
-def do_generate(pos_major, cur, sms):
-    sms_data = readin_semester()
-    class_map = get_course_info()
-    if len(pos_major) == 0 or len(cur) == 5:
-        return [cur]
-    result = do_generate(pos_major[1:], cur, sms)
-    for itm in pos_major[0]:
-        if itm not in class_map.keys() and itm != "COMP":
-            continue
-        k = "S"
-        if math.floor(sms / 2) * 2 < sms:
-            k = "F"
-        if k not in sms_data[itm]:
-            continue
-        cp_cur = list(cur)
-        cp_cur.append(itm)
-        if not has_time_conflict(cp_cur, class_map):
-            result = do_generate(pos_major[1:], cp_cur, sms) + result
-    max_len = max([len(c) for c in result])
-    new_result = [l for l in result if len(l) == max_len]
-    for itm1 in new_result:
-        for i in range(5 - max_len):
-            itm1.append("COMP")
-    return new_result
-
-print(predict_grad_wrapper(["COMP322", "COMP310", "NEUR416", "PSYC362", "PSYC461"], ["COMP140", "COMP182", "COMP215", "MATH222", "MATH221", "MATH101", "MATH102", "MATH354", "PHYS101", "PHYS102"], 7))
 
 # print(check_major_pre_req([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"]))
 # print(get_course_info())
