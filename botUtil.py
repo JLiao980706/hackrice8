@@ -300,8 +300,9 @@ def readin_semester():
 
 def predict_grad_wrapper(lst, courses_taken, sms):
     result = predict_grad(lst, courses_taken, sms)
+    string = "Graduation Check: \n"
     if result[0] == 0:
-        return "You will graduate on time!"
+        return string + "You will graduate on time!"
     else:
         elective_string = ""
         if "COMP" in result[1]:
@@ -316,7 +317,7 @@ def predict_grad_wrapper(lst, courses_taken, sms):
             if substring != "":
                 strings.append(substring)
         mystring = ", ".join(strings)
-        return "You will not be able to graduate on time. The courses that you are not able to take are: " + mystring + elective_string
+        return string + "You will not be able to graduate on time. The courses that you are not able to take are: " + mystring + elective_string
 
 
 def predict_grad(lst, courses_taken, sms):
@@ -395,7 +396,7 @@ def do_generate(pos_major, cur, sms):
             itm1.append("COMP")
     return new_result
 
-print(predict_grad_wrapper(["COMP322", "COMP310", "NEUR416", "PSYC362", "PSYC461"], ["COMP140", "COMP182", "COMP215", "MATH222", "MATH221", "MATH101", "MATH102", "MATH354", "PHYS101", "PHYS102"], 7))
+# print(predict_grad_wrapper(["COMP322", "COMP310", "NEUR416", "PSYC362", "PSYC461"], ["COMP140", "COMP182", "COMP215", "MATH222", "MATH221", "MATH101", "MATH102", "MATH354", "PHYS101", "PHYS102"], 7))
 
 # print(check_major_pre_req([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"]))
 # print(get_course_info())

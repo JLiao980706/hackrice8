@@ -18,6 +18,7 @@ flag0 = False
 flag1 = False
 flag2 = False
 flag3 = False
+year = 0
 m = botUtil.get_course_info()
 m2 = botUtil.get_pre_req()
 course_list = []
@@ -57,6 +58,7 @@ def receive_message():
     global flag1
     global flag2
     global flag3
+    global year
     print("MESSAGE RECEIVED")
     global course_list
     global course_taken
@@ -145,6 +147,13 @@ def receive_message():
                             flag2 = True
                     elif not flag3:
                         response_sent_text = message['message'].get('text').upper()
+                        if "GRADUATE" in response_sent_text:
+                            if cTerm == "F":
+                                sms = year * 2
+                            else:
+                                sms = year * 2 + 1
+                            send_message(recipient_id, botUtil.predict_grad_wrapper(course_list, course_taken, sms))
+                            break
                         if "COURSE RECOMMENDATION" in response_sent_text:
                             tuple_of_tuple = botUtil.course_recommandation(course_list, m, course_taken, botUtil.readin_json("course_graph.json"), botUtil.readin_json("course_cat.json"))
                             send_message(recipient_id, botUtil.check_major_pre_req(course_list, botUtil.readin_json("pre_req.json"), course_taken))

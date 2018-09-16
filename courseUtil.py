@@ -24,6 +24,8 @@ def get_add_subtract_list(input_str, m):
 
 
 def tpt_to_output_string(tpt):
+    if () in tpt:
+        return "Sorry, maybe you should take more courses for me to generate recommended courses."
     itm1 = tpt[0]
     itm2 = tpt[1]
     course_field_1 = itm1[0]
