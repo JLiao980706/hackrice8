@@ -12,7 +12,7 @@ def to_time_interval(timestr):
 
 def get_course_info():
     mapping = {}
-    with open('new_info_1.csv') as csvfile:
+    with open('courses_general_info.csv') as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         first = next(readCSV)
         for row in readCSV:
