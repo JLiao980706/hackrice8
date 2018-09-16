@@ -87,14 +87,32 @@ def report_prereq(lst, class_map, courses_taken):
 
 def check_prereq(lst, class_map, courses_taken):
     ans = report_prereq(lst, class_map, courses_taken)
+    strings = []
+    for c in ans:
+        pre_req = class_map[c]
+        lst1 = []
+        for a in pre_req:
+            lst2 = []
+            for b in a:
+                level3 = " and ".join(b)
+                if len(b) > 1:
+                    level3 = "(" + level3 + ")"
+                lst2.append(level3)
+            level2 = " or ".join(lst2)
+            if len(a) > 1:
+                level2 = "(" + level2 + ")"
+            lst1.append(level2)
+        pre_req_string = " and ".join(lst1)
+        pre_req_string = "The pre-req for " + c + " is: " + pre_req_string
+        strings.append(pre_req_string)
     res = ""
     if ans:
         for itm in ans:
             res += itm + " and "
-        return "You have not completed prerequisite class for " + res[:-5] + ".\n\n"
+        return "You have not completed prerequisite class for " + res[:-5] + ".\n" + "\n".join(strings)
     return res
 
-
+print(check_prereq(["COMP407", "COMP382", "MATH101"], get_pre_req(), []))
 def check_schedule(lst, class_map):
     time = {"1": [], "2": [], "3": [], "4": [], "5": []}
     res = []
@@ -186,17 +204,14 @@ def course_recommandation(lst, class_map, courses_taken, course_graph, course_ca
     for c in useful_courses:
         if course_catergory[c] in reverse_course_cat.keys():
             cat_rank_dict[course_catergory[c]] += 1
-    print(cat_rank_dict)
     rank_num_dict = defaultdict(list)
     for key, value in cat_rank_dict.items():
         rank_num_dict[value].append(key)
-    print(rank_num_dict)
     val_list = [v for v in rank_num_dict.keys()]
     val_list.sort()
     cat_rank_list = []
     for v in val_list:
         cat_rank_list += rank_num_dict[v]
-    print(val_list)
     # Filtered the course that does not
     first_choice = cat_rank_list[-1]
     first_course_list = reverse_course_cat[first_choice]
@@ -242,7 +257,7 @@ def check_major_pre_req(lst, pre_req, courses_taken):
 
 
 
-print(check_major_pre_req([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"]))
+# print(check_major_pre_req([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"]))
 # print(get_course_info())
 # print(course_recommandation([], get_pre_req(), ["COMP140", "COMP215", "MATH354", "COMP321", "COMP326", "COMP447", "COMP441"], readin_json("course_graph.json"), readin_json("course_cat.json")))
 
