@@ -1,5 +1,6 @@
 ## Python libraries that we need to import for our bot
 import botUtil
+import courseUtil
 from flask import Flask, request
 from pymessenger.bot import Bot ## pymessenger is a Python wrapper for the Facebook Messenger API
 
@@ -11,6 +12,9 @@ bot = Bot(ACCESS_TOKEN) ## Create an instance of the bot
 flag1 = False
 flag2 = False
 flag3 = False
+m = botUtil.get_course_info()
+m2 = botUtil.get_pre_req()
+course_list = []
 
 def verify_fb_token(token_sent):
     ## Verifies that the token sent by Facebook matches the token sent locally
@@ -34,8 +38,9 @@ def receive_message():
     global flag2
     global flag3
     print("MESSAGE RECEIVED")
-
-    m = botUtil.get_course_info()
+    global course_list
+    global m2
+    global m
     ## Handle GET requests
     if request.method == 'GET':
         token_sent = request.args.get("hub.verify_token") ## Facebook requires a verify token when receiving messages
@@ -58,9 +63,36 @@ def receive_message():
                         process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
                         if not process:
                             send_message(recipient_id,
-                                         "You typed in some course name incorrectly or the course names are not in the correct format!")
+                                         "You did not type course names separated by comma, or the course names are not in the correct format!")
                         else:
-                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m))
+                            course_list = botUtil.get_courses_from_input(response_sent_text)
+                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2))
+                            flag2 = True
+                    elif not flag3:
+                        response_sent_text = message['message'].get('text').upper()
+                        process = botUtil.check_valid(botUtil.get_courses_from_input(response_sent_text), m)
+                        if process:
+                            send_message(recipient_id, botUtil.get_msg2send(response_sent_text, m, m2))
+                            course_list = botUtil.get_courses_from_input(response_sent_text)
+                        else:
+                            output_list = courseUtil.get_add_subtract_list(response_sent_text, m)
+                            for itm in output_list[0]:
+                                send_message(recipient_id, "What do you want to do with " + itm + "?\n")
+                            for itm in output_list[1]:
+                                if itm not in course_list:
+                                    send_message(recipient_id, "Added " + itm + ".\n")
+                                    course_list.append(itm)
+                                else:
+                                    send_message(recipient_id, itm + " is already in your choices!\n")
+                            for itm in output_list[2]:
+                                if itm in course_list:
+                                    send_message(recipient_id, "Removed " + itm + ".\n")
+                                    course_list.remove(itm)
+                                else:
+                                    send_message(recipient_id, "You have not chosen " + itm + "!\n")
+                            send_message(recipient_id, "\n")
+                            send_message(recipient_id, "Analyzing your new course selection: ")
+                            send_message(recipient_id, botUtil.get_msg2send_from_list(course_list, m, m2))
 
                     # if "hackrice" in message['message'].get('text').lower():
                     #     response_sent_text = get_message_text()
