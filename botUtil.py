@@ -112,7 +112,7 @@ def check_prereq(lst, class_map, courses_taken):
         return "You have not completed prerequisite class for " + res[:-5] + ".\n" + "\n".join(strings)
     return res
 
-print(check_prereq(["COMP407", "COMP382", "MATH101"], get_pre_req(), []))
+# print(check_prereq(["COMP407", "COMP382", "MATH101"], get_pre_req(), []))
 def check_schedule(lst, class_map):
     time = {"1": [], "2": [], "3": [], "4": [], "5": []}
     res = []
